@@ -42,7 +42,10 @@ object WikipediaRanking extends WikipediaRankingInterface {
    */
   def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = {
 
-    val langsCounter: List[(String, Int)] = langs.map(lang => (lang, occurrencesOfLang(lang, rdd))).sortBy(_._2).reverse
+    val langsCounter: List[(String, Int)] = langs
+      .map(lang => (lang, occurrencesOfLang(lang, rdd)))
+      .sortBy(_._2)
+      .reverse
 
     langsCounter
   }
