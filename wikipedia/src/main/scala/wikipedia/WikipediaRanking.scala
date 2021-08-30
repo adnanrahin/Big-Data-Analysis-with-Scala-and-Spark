@@ -44,15 +44,25 @@ object WikipediaRanking extends WikipediaRankingInterface {
 
     val langsCounter: List[(String, Int)] = langs.map(lang => (lang, occurrencesOfLang(lang, rdd))).sortBy(_._2).reverse
 
-    langsCounter.foreach(f => println(f._1 + " " + f._2))
-
     langsCounter
   }
 
   /* Compute an inverted index of the set of articles, mapping each language
    * to the Wikipedia pages in which it occurs.
    */
-  def makeIndex(langs: List[String], rdd: RDD[WikipediaArticle]): RDD[(String, Iterable[WikipediaArticle])] = ???
+  def makeIndex(langs: List[String], rdd: RDD[WikipediaArticle]): RDD[(String, Iterable[WikipediaArticle])] = {
+
+    val indexer: RDD[(String, Iterable[WikipediaArticle])] =
+      rdd
+        .flatMap {
+          f =>
+            langs
+              .filter(lang => f.mentionsLanguage(lang))
+              .map(lang => (lang, f))
+        }.groupByKey()
+
+    indexer
+  }
 
   /* (2) Compute the language ranking again, but now using the inverted index. Can you notice
    *     a performance improvement?
