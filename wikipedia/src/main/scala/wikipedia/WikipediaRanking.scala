@@ -57,12 +57,7 @@ object WikipediaRanking extends WikipediaRankingInterface {
 
     val indexer: RDD[(String, Iterable[WikipediaArticle])] =
       rdd
-        .flatMap {
-          f =>
-            langs
-              .filter(lang => f.mentionsLanguage(lang))
-              .map(lang => (lang, f))
-        }.groupByKey()
+        .flatMap(f => langs.filter(lang => f.mentionsLanguage(lang)).map(lang => (lang, f))).groupByKey()
 
     indexer
   }
