@@ -18,10 +18,7 @@ project/target/
 target/
 project/null/
 null/
-*.sbt
-*.conf
-**.dat
-wikipedia/src/main/resources/wikipedia/wikipedia.dat
+src/
 
 # eclipse
 build/
