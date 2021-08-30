@@ -76,7 +76,7 @@ object WikipediaRanking extends WikipediaRankingInterface {
   def rankLangsUsingIndex(index: RDD[(String, Iterable[WikipediaArticle])]): List[(String, Int)] = {
 
     val rankIndex: List[(String, Int)] = index
-      .map(f=> (f._1, f._2.size))
+      .map(f => (f._1, f._2.size))
       .collect()
       .toList
       .sortBy(_._2)
@@ -94,13 +94,16 @@ object WikipediaRanking extends WikipediaRankingInterface {
    *   several seconds.
    */
   def rankLangsReduceByKey(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = {
-    rdd.flatMap(article => langs
-      .filter(lang => article.text.split(" ").contains(lang))
-      .map(lang => (lang, 1)))
+
+    val reduceByKey = rdd
+      .flatMap(f => langs.filter(lang => f.mentionsLanguage(lang))
+        .map(lang => (lang, 1)))
       .reduceByKey(_ + _)
       .collect()
       .toList
-      .sortWith(_._2 > _._2)
+      .sortBy(_._2).reverse
+
+    reduceByKey
   }
 
   def main(args: Array[String]): Unit = {
