@@ -20,6 +20,8 @@ project/null/
 null/
 *.sbt
 *.conf
+**.dat
+wikipedia/src/main/resources/wikipedia/wikipedia.dat
 
 # eclipse
 build/

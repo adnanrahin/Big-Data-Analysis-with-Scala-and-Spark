@@ -1,10 +1,7 @@
 package wikipedia
 
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
-
 import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkConf, SparkContext}
 
 case class WikipediaArticle(title: String, text: String) {
   /**
@@ -20,16 +17,20 @@ object WikipediaRanking extends WikipediaRankingInterface {
     "JavaScript", "Java", "PHP", "Python", "C#", "C++", "Ruby", "CSS",
     "Objective-C", "Perl", "Scala", "Haskell", "MATLAB", "Clojure", "Groovy")
 
-  val conf: SparkConf = ???
-  val sc: SparkContext = ???
+  val conf: SparkConf = new SparkConf().setMaster("local[*]")
+    .setAppName("WikipediaRanking")
+
+  val sc: SparkContext = new SparkContext(conf)
   // Hint: use a combination of `sc.parallelize`, `WikipediaData.lines` and `WikipediaData.parse`
-  val wikiRdd: RDD[WikipediaArticle] = ???
+  val wikiRdd: RDD[WikipediaArticle] = sc.parallelize(WikipediaData.lines).map(line => WikipediaData.parse(line))
 
   /** Returns the number of articles on which the language `lang` occurs.
-   *  Hint1: consider using method `aggregate` on RDD[T].
-   *  Hint2: consider using method `mentionsLanguage` on `WikipediaArticle`
-   */
-  def occurrencesOfLang(lang: String, rdd: RDD[WikipediaArticle]): Int = ???
+    * Hint1: consider using method `aggregate` on RDD[T].
+    * Hint2: consider using method `mentionsLanguage` on `WikipediaArticle`
+    */
+  def occurrencesOfLang(lang: String, rdd: RDD[WikipediaArticle]): Int = {
+    rdd.filter(f => f.mentionsLanguage(lang)).count().toInt
+  }
 
   /* (1) Use `occurrencesOfLang` to compute the ranking of the languages
    *     (`val langs`) by determining the number of Wikipedia articles that
@@ -39,7 +40,14 @@ object WikipediaRanking extends WikipediaRankingInterface {
    *   Note: this operation is long-running. It can potentially run for
    *   several seconds.
    */
-  def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = ???
+  def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = {
+
+    val langsCounter: List[(String, Int)] = langs.map(lang => (lang, occurrencesOfLang(lang, rdd))).sortBy(_._2).reverse
+
+    langsCounter.foreach(f => println(f._1 + " " + f._2))
+
+    langsCounter
+  }
 
   /* Compute an inverted index of the set of articles, mapping each language
    * to the Wikipedia pages in which it occurs.
@@ -65,6 +73,8 @@ object WikipediaRanking extends WikipediaRankingInterface {
 
   def main(args: Array[String]): Unit = {
 
+    println(occurrencesOfLang("Scala", wikiRdd))
+
     /* Languages ranked according to (1) */
     val langsRanked: List[(String, Int)] = timed("Part 1: naive ranking", rankLangs(langs, wikiRdd))
 
@@ -83,6 +93,7 @@ object WikipediaRanking extends WikipediaRankingInterface {
   }
 
   val timing = new StringBuffer
+
   def timed[T](label: String, code: => T): T = {
     val start = System.currentTimeMillis()
     val result = code
